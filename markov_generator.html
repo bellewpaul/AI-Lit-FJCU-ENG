@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Markov Chain Text Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .secondary-btn {
+            background-color: #95a5a6;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .output-area {
+            background-color: #fff;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            padding: 20px;
+            min-height: 150px;
+            font-family: 'Georgia', serif;
+            font-size: 16px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-box {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        
+        .chain-visualization {
+            background-color: #fff;
+            border: 2px solid #e74c3c;
+            border-radius: 4px;
+            padding: 20px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .chain-item {
+            margin-bottom: 8px;
+            padding: 5px;
+            background-color: #fef5e7;
+            border-radius: 3px;
+        }
+        
+        .word-key {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .word-following {
+            color: #27ae60;
+        }
+        
+        .help-text {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .example-texts {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .example-btn {
+            background-color: #9b59b6;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+        
+        .example-btn:hover {
+            background-color: #8e44ad;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .error {
+            background-color: #fadbd8;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .success {
+            background-color: #d5f4e6;
+            color: #196f3d;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border-left: 4px solid #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Educational Markov Chain Text Generator</h1>
+        <p class="subtitle">Learn how Markov chains generate text through probability patterns</p>
+        
+        <!-- Input Section -->
+        <div class="section">
+            <h2>Step 1: Load Your Training Text (Corpus)</h2>
+            
+            <div class="example-texts">
+                <button class="example-btn" onclick="loadExample('poe')">Load Poe Example</button>
+                <button class="example-btn" onclick="loadExample('austen')">Load Austen Example</button>
+                <button class="example-btn" onclick="loadExample('simple')">Load Simple Example</button>
+            </div>
+            
+            <label for="fileInput">Upload a text file (.txt):</label>
+            <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)">
+            
+            <label for="corpusInput">Or paste your text here:</label>
+            <textarea id="corpusInput" rows="10" placeholder="Paste your training text here... This is the text the Markov chain will learn from."></textarea>
+            
+            <button onclick="buildChain()">Build Markov Chain Model</button>
+            
+            <div id="buildMessage"></div>
+            
+            <div class="stats" id="statsArea" style="display: none;">
+                <div class="stat-box">
+                    <div class="stat-number" id="wordCount">0</div>
+                    <div class="stat-label">Total Words</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="uniqueWords">0</div>
+                    <div class="stat-label">Unique Words</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="chainStates">0</div>
+                    <div class="stat-label">Chain States</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visualization Section -->
+        <div class="section" id="visualSection" style="display: none;">
+            <h2>Step 2: Explore the Chain (Optional)</h2>
+            <p class="help-text">See what words follow other words in your training text. This is the "model" the generator uses.</p>
+            
+            <button onclick="toggleVisualization()">Show/Hide Word Patterns</button>
+            
+            <div class="chain-visualization" id="chainViz" style="display: none;"></div>
+        </div>
+        
+        <!-- Generation Section -->
+        <div class="section" id="generateSection" style="display: none;">
+            <h2>Step 3: Generate Text</h2>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="promptInput">Starting word(s) (prompt):</label>
+                    <input type="text" id="promptInput" placeholder="e.g., 'The' or 'Once upon'">
+                    <p class="help-text">Leave blank for random start, or type word(s) from your corpus</p>
+                </div>
+                
+                <div class="control-group">
+                    <label for="lengthInput">Number of words to generate:</label>
+                    <input type="number" id="lengthInput" value="50" min="10" max="500">
+                </div>
+                
+                <div class="control-group">
+                    <label for="orderInput">Chain order (n-gram size):</label>
+                    <input type="number" id="orderInput" value="1" min="1" max="3">
+                    <p class="help-text">1 = look at 1 word, 2 = look at 2 words, etc.</p>
+                </div>
+            </div>
+            
+            <button onclick="generateText()">Generate Text</button>
+            <button class="secondary-btn" onclick="generateText()">Generate Again</button>
+            <button class="secondary-btn" onclick="clearOutput()">Clear Output</button>
+            
+            <div id="generateMessage"></div>
+        </div>
+        
+        <!-- Output Section -->
+        <div class="section" id="outputSection" style="display: none;">
+            <h2>Generated Text</h2>
+            <div class="output-area" id="output"></div>
+            <button onclick="copyOutput()" style="margin-top: 15px;">Copy to Clipboard</button>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let markovChain = {};
+        let words = [];
+        let chainOrder = 1;
+        
+        // Example texts
+        const examples = {
+            poe: `Once upon a midnight dreary, while I pondered, weak and weary,
+Over many a quaint and curious volume of forgotten lore—
+While I nodded, nearly napping, suddenly there came a tapping,
+As of some one gently rapping, rapping at my chamber door.
+"'Tis some visitor," I muttered, "tapping at my chamber door—
+Only this and nothing more."
+
+Ah, distinctly I remember it was in the bleak December;
+And each separate dying ember wrought its ghost upon the floor.
+Eagerly I wished the morrow;—vainly I had sought to borrow
+From my books surcease of sorrow—sorrow for the lost Lenore—
+For the rare and radiant maiden whom the angels name Lenore—
+Nameless here for evermore.`,
+            
+            austen: `It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.
+However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered the rightful property of some one or other of their daughters.
+"My dear Mr. Bennet," said his lady to him one day, "have you heard that Netherfield Park is let at last?"
+Mr. Bennet replied that he had not.
+"But it is," returned she; "for Mrs. Long has just been here, and she told me all about it."`,
+            
+            simple: `The cat sat on the mat. The cat ate the fish. The dog sat on the cat. The dog ate the bone. The cat ran away. The dog ran after the cat. The mat was empty. The fish was gone. The bone was gone. The cat came back. The dog came back. The cat and the dog sat on the mat.`
+        };
+        
+        // Load example text
+        function loadExample(type) {
+            document.getElementById('corpusInput').value = examples[type];
+            showMessage('buildMessage', `Loaded ${type} example. Click "Build Markov Chain Model" to continue.`, 'success');
+        }
+        
+        // Handle file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('corpusInput').value = e.target.result;
+                    showMessage('buildMessage', 'File loaded successfully! Click "Build Markov Chain Model" to continue.', 'success');
+                };
+                reader.readAsText(file);
+            }
+        }
+        
+        // Build the Markov chain
+        function buildChain() {
+            const corpus = document.getElementById('corpusInput').value.trim();
+            
+            if (!corpus) {
+                showMessage('buildMessage', 'Please provide some training text first!', 'error');
+                return;
+            }
+            
+            // Get order
+            chainOrder = parseInt(document.getElementById('orderInput').value) || 1;
+            
+            // Tokenize
+            words = corpus.split(/\s+/).filter(word => word.length > 0);
+            
+            if (words.length < chainOrder + 1) {
+                showMessage('buildMessage', 'Training text is too short for this chain order!', 'error');
+                return;
+            }
+            
+            // Build chain
+            markovChain = {};
+            
+            for (let i = 0; i < words.length - chainOrder; i++) {
+                let state = words.slice(i, i + chainOrder).join(' ');
+                let next = words[i + chainOrder];
+                
+                if (!markovChain[state]) {
+                    markovChain[state] = [];
+                }
+                markovChain[state].push(next);
+            }
+            
+            // Update stats
+            document.getElementById('wordCount').textContent = words.length;
+            document.getElementById('uniqueWords').textContent = new Set(words).size;
+            document.getElementById('chainStates').textContent = Object.keys(markovChain).length;
+            
+            // Show sections
+            document.getElementById('statsArea').style.display = 'grid';
+            document.getElementById('visualSection').style.display = 'block';
+            document.getElementById('generateSection').style.display = 'block';
+            document.getElementById('outputSection').style.display = 'block';
+            
+            showMessage('buildMessage', 'Markov chain built successfully! You can now generate text below.', 'success');
+            
+            // Update visualization
+            updateVisualization();
+        }
+        
+        // Update visualization
+        function updateVisualization() {
+            const vizDiv = document.getElementById('chainViz');
+            let html = '';
+            
+            // Show first 20 states
+            const states = Object.keys(markovChain).slice(0, 20);
+            
+            for (let state of states) {
+                const followers = markovChain[state];
+                const uniqueFollowers = [...new Set(followers)];
+                const counts = {};
+                
+                followers.forEach(word => {
+                    counts[word] = (counts[word] || 0) + 1;
+                });
+                
+                html += `<div class="chain-item">`;
+                html += `<span class="word-key">"${state}"</span> → `;
+                html += `<span class="word-following">[${uniqueFollowers.map(w => `${w}(${counts[w]})`).join(', ')}]</span>`;
+                html += `</div>`;
+            }
+            
+            if (Object.keys(markovChain).length > 20) {
+                html += `<div class="chain-item" style="text-align: center; font-style: italic;">... and ${Object.keys(markovChain).length - 20} more states</div>`;
+            }
+            
+            vizDiv.innerHTML = html;
+        }
+        
+        // Toggle visualization
+        function toggleVisualization() {
+            const viz = document.getElementById('chainViz');
+            viz.style.display = viz.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Generate text
+        function generateText() {
+            if (Object.keys(markovChain).length === 0) {
+                showMessage('generateMessage', 'Please build a Markov chain first!', 'error');
+                return;
+            }
+            
+            const length = parseInt(document.getElementById('lengthInput').value) || 50;
+            const promptText = document.getElementById('promptInput').value.trim();
+            
+            let result = [];
+            let currentState;
+            
+            // Initialize with prompt or random state
+            if (promptText) {
+                const promptWords = promptText.split(/\s+/).filter(w => w.length > 0);
+                
+                // Check if prompt exists in chain
+                if (promptWords.length >= chainOrder) {
+                    const promptState = promptWords.slice(-chainOrder).join(' ');
+                    if (markovChain[promptState]) {
+                        result = [...promptWords];
+                        currentState = promptState;
+                    } else {
+                        showMessage('generateMessage', `Prompt "${promptText}" not found in chain. Using random start.`, 'error');
+                        currentState = randomChoice(Object.keys(markovChain));
+                        result = currentState.split(' ');
+                    }
+                } else {
+                    // Prompt too short, try to find matching start
+                    const matchingStates = Object.keys(markovChain).filter(s => s.startsWith(promptText));
+                    if (matchingStates.length > 0) {
+                        currentState = randomChoice(matchingStates);
+                        result = currentState.split(' ');
+                    } else {
+                        showMessage('generateMessage', `Prompt "${promptText}" not found. Using random start.`, 'error');
+                        currentState = randomChoice(Object.keys(markovChain));
+                        result = currentState.split(' ');
+                    }
+                }
+            } else {
+                // Random start
+                currentState = randomChoice(Object.keys(markovChain));
+                result = currentState.split(' ');
+            }
+            
+            // Generate
+            for (let i = result.length; i < length; i++) {
+                const possibleNexts = markovChain[currentState];
+                
+                if (!possibleNexts || possibleNexts.length === 0) {
+                    // Dead end - start with new random state
+                    currentState = randomChoice(Object.keys(markovChain));
+                    result.push('...');
+                    result.push(...currentState.split(' '));
+                    continue;
+                }
+                
+                const nextWord = randomChoice(possibleNexts);
+                result.push(nextWord);
+                
+                // Update state
+                const stateWords = currentState.split(' ');
+                stateWords.shift();
+                stateWords.push(nextWord);
+                currentState = stateWords.join(' ');
+            }
+            
+            // Display
+            document.getElementById('output').textContent = result.join(' ');
+            showMessage('generateMessage', '', '');
+        }
+        
+        // Helper: random choice from array
+        function randomChoice(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+        
+        // Clear output
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+        }
+        
+        // Copy output
+        function copyOutput() {
+            const output = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(output).then(() => {
+                alert('Text copied to clipboard!');
+            });
+        }
+        
+        // Show message
+        function showMessage(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            if (!message) {
+                el.innerHTML = '';
+                return;
+            }
+            const className = type === 'error' ? 'error' : 'success';
+            el.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
